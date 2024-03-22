@@ -1,9 +1,11 @@
 from flask import Flask, render_template
 from baseDeDonnee import Insertion_article_auteur
+from baseDeDonnee import Insertion_conf
 from Bib import BibTex
 from CreationBaseDeDonnee import lancementCreationTable
 from LesDiagrames import diagrameRepSexe
 from LesDiagrames import nombrePersonneParArticle
+from LesDiagrames import diagrammeRepPays
 app = Flask(__name__)
 
 @app.route('/')
@@ -39,6 +41,18 @@ def create_articles_diagram():
     # Insérer ici la logique pour créer le diagramme représentant le nombre d'articles par nombre de personne
     nombrePersonneParArticle.main()
     return "Diagramme sur le nombre d'articles créé avec succès!"
+
+@app.route('/insert_conferences')
+def insert_conferences():
+    # Insérer ici la logique pour insérer les conférences dans la base de données
+    Insertion_conf.main()
+    return "Conférences insérées avec succès!"
+
+@app.route('/diagrameRepPays')
+def diagrameRepPays():
+    # Insérer ici la logique pour créer le diagramme représentant le nombre de conférences par pays
+    diagrammeRepPays.main()
+    return "Diagramme sur le nombre de conférences par pays créé avec succès!"
 
 if __name__ == '__main__':
     app.run(debug=True)

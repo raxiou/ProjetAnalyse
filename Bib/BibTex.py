@@ -8,18 +8,37 @@ def generate_bibtex_entry(data_tuple, column_names):
     # Commencer la chaîne de caractères de l'entrée BibTeX avec le type d'entrée et une accolade ouvrante
     bibtex_entry = f"@{entry_type}{{"
 
+    # Créer un dictionnaire pour stocker les auteurs
+    authors = []
+
     # Parcourir les éléments du tuple
     for i in range(len(column_names)):
-        # Ajouter chaque élément avec son nom de colonne correspondant dans l'entrée BibTeX
-        bibtex_entry += f"{column_names[i]} = {{{data_tuple[i]}}}"
-        # Ajouter une virgule si ce n'est pas le dernier élément
-        if i < len(column_names) - 1:
-            bibtex_entry += ', '
+        # Si la colonne correspond aux informations sur l'auteur
+        if column_names[i] == 'lastname':
+            # Créer un dictionnaire pour stocker les informations de l'auteur actuel
+            author_info = {}
+            # Ajouter les informations pertinentes de l'auteur
+            author_info['lastname'] = data_tuple[i]
+            author_info['secondname'] = data_tuple[i+1]
+            author_info['firstname'] = data_tuple[i+2]
+            # Ajouter l'auteur au dictionnaire des auteurs
+            authors.append(author_info)
+        # Si la colonne n'est pas celle des informations sur l'auteur
+        else:
+            # Ajouter chaque élément avec son nom de colonne correspondant dans l'entrée BibTeX
+            bibtex_entry += f"{column_names[i]} = {{{data_tuple[i]}}}"
+            # Ajouter une virgule si ce n'est pas le dernier élément
+            if i < len(column_names) - 1:
+                bibtex_entry += ', '
 
+    # Ajouter les informations sur les auteurs dans l'entrée BibTeX
+    bibtex_entry += f"auteurs = {{{', '.join([author['lastname'] + ', ' + author['secondname'] + ', ' + author['firstname'] for author in authors])}}}"
+    
     # Ajouter une accolade fermante à la fin de l'entrée BibTeX
     bibtex_entry += "}"
     # Retourner l'entrée BibTeX générée
     return bibtex_entry
+
 
 def main():
     ##connexion à la base de données

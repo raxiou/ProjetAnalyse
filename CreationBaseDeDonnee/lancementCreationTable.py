@@ -74,24 +74,14 @@ def main():
             Constraint vevue_pk PRIMARY Key(idArticle)
         );
         """,
-
         """
-        CREATE Table _labo (
-            idLabo INT,
+        CREATE TABLE _conference (
+            idConference SERIAL,
             nom VARCHAR(200),
-            Constraint  labo_pk PRIMARY KEY(idLabo)
-        );
-        """,
-            
-        """
-        CREATE TABLE _travailau (
-            idLabo INT,
-            idAuteur VARCHAR(200),
             dateDebut DATE,
             dateFin DATE,
-            CONSTRAINT travailau_pk PRIMARY KEY (idLabo, idAuteur),
-            CONSTRAINT travailau_fk FOREIGN KEY (idLabo) REFERENCES _labo(idLabo),
-            CONSTRAINT travailau_fk1 FOREIGN KEY (idAuteur) REFERENCES _auteur(pid)
+            localisation VARCHAR(200),
+            Constraint conference_pk PRIMARY Key(idConference)
         );
         """,
 

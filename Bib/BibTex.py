@@ -2,40 +2,36 @@ import json
 import requests
 import psycopg2
 
-def generate_bibtex_entry(data_tuple, column_names):
+def generate_bibtex_entry(data_tuples, column_names):
     # Définir le type d'entrée BibTeX (dans ce cas, "article")
     entry_type = 'article'
     # Commencer la chaîne de caractères de l'entrée BibTeX avec le type d'entrée et une accolade ouvrante
     bibtex_entry = f"@{entry_type}{{"
 
-    # Créer un dictionnaire pour stocker les auteurs
+    # Extraire les informations spécifiques à chaque article
+    idarticle, nom, url, year, page, doi, ee, pid = data_tuples[0][:8]
+
+    # Créer une liste pour stocker les noms complets des auteurs
     authors = []
 
-    # Parcourir les éléments du tuple
-    for i in range(len(column_names)):
-        # Si la colonne correspond aux informations sur l'auteur
-        if column_names[i] == 'lastname':
-            # Créer un dictionnaire pour stocker les informations de l'auteur actuel
-            author_info = {}
-            # Ajouter les informations pertinentes de l'auteur
-            author_info['lastname'] = data_tuple[i]
-            author_info['secondname'] = data_tuple[i+1]
-            author_info['firstname'] = data_tuple[i+2]
-            # Ajouter l'auteur au dictionnaire des auteurs
-            authors.append(author_info)
-        # Si la colonne n'est pas celle des informations sur l'auteur
-        else:
-            # Ajouter chaque élément avec son nom de colonne correspondant dans l'entrée BibTeX
-            bibtex_entry += f"{column_names[i]} = {{{data_tuple[i]}}}"
-            # Ajouter une virgule si ce n'est pas le dernier élément
-            if i < len(column_names) - 1:
-                bibtex_entry += ', '
+    # Parcourir les tuples de données pour extraire les noms des auteurs
+    for row in data_tuples:
+        authors.append("{" + ", ".join(row[8:]) + "}")
 
-    # Ajouter les informations sur les auteurs dans l'entrée BibTeX
-    bibtex_entry += f"auteurs = {{{', '.join([author['lastname'] + ', ' + author['secondname'] + ', ' + author['firstname'] for author in authors])}}}"
-    
+    # Ajouter les informations de l'article à l'entrée BibTeX
+    bibtex_entry += f"idarticle = {{{idarticle}}}, "
+    bibtex_entry += f"nom = {{{nom}}}, "
+    bibtex_entry += f"url = {{{url}}}, "
+    bibtex_entry += f"year = {{{year}}}, "
+    bibtex_entry += f"page = {{{page}}}, "
+    bibtex_entry += f"doi = {{{doi}}}, "
+    bibtex_entry += f"ee = {{{ee}}}, "
+    bibtex_entry += f"pid = {{{pid}}}, "
+    bibtex_entry += f"auteurs = {{{', '.join(authors)}}}"
+
     # Ajouter une accolade fermante à la fin de l'entrée BibTeX
     bibtex_entry += "}"
+    
     # Retourner l'entrée BibTeX générée
     return bibtex_entry
 
@@ -53,10 +49,12 @@ def main():
     cur = conn.cursor()
 
     ##exécution de la requête SQL
-    cur.execute("""SELECT _article.idarticle, nom ,url ,year ,page ,doi ,ee ,pid, lastname, secondname, firstname 
-                FROM _article, _auteur, _ecrit
-                where _ecrit.idarticle = _article.idArticle
-                AND _auteur.pid = _ecrit.idauteur;""")
+    cur.execute("""SELECT _article.idarticle, nom, url, year, page, doi, ee, pid, _auteur.lastname, _auteur.secondname, _auteur.firstname 
+                    FROM _article 
+                    JOIN _ecrit ON _ecrit.idarticle = _article.idarticle
+                    JOIN _auteur ON _auteur.pid = _ecrit.idauteur
+                    ORDER BY _article.idarticle;
+                    """)
     rows = cur.fetchall()
 
     ##récupération des noms de colonnes
@@ -67,8 +65,20 @@ def main():
 
     ##génération des entrées BibTeX pour toutes les lignes de la base de données
     bibTex = ""
+    current_id = None
+    current_entry_data = []
+
     for row in rows:
-        bibTex += generate_bibtex_entry(row, colnames) + "\n\n"
+        if current_id != row[0]:
+            if current_id is not None:
+                bibTex += generate_bibtex_entry(current_entry_data, colnames) + "\n\n"
+            current_entry_data = [row]
+            current_id = row[0]
+        else:
+            current_entry_data.append(row)
+
+    if current_entry_data:
+        bibTex += generate_bibtex_entry(current_entry_data, colnames) + "\n\n"
 
     ##écriture des entrées BibTeX dans un fichier
     with open('Bib/bibtex_entries.bib', 'w') as file:

@@ -72,3 +72,9 @@ CREATE TABLE _ecrit (
     CONSTRAINT ecrit_fk FOREIGN KEY (idArticle) REFERENCES _article(idArticle),
     CONSTRAINT ecrit_fk1 FOREIGN KEY (idAuteur) REFERENCES _auteur(pid)
 );
+
+SELECT
+FROM _article, _auteur, _ecrit
+WHERE _article.idArticle = _ecrit.idArticle
+AND _auteur.pid = _ecrit.idAuteur
+AND 
